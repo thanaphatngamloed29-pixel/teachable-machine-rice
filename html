@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Teachable Machine Embed</title>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+  <style>body{font-family:sans-serif}</style>
+</head>
+<body>
+  <h3>ทดสอบโมเดล</h3>
+  <video id="webcam" autoplay playsinline width="320" height="240"></video>
+  <button id="start">เริ่มกล้อง</button>
+  <div id="label-container"></div>
+
+  <script>
+    const URL = "https://teachablemachine.withgoogle.com/models/amAoOP4xYM/"; // เปลี่ยนเป็น URL โมเดลของคุณ
+    let model, webcam, labelContainer;
+
+    async function init() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+      model = await tmImage.load(modelURL, metadataURL);
+      labelContainer = document.getElementById("label-container");
+      document.getElementById("start").addEventListener("click", async () => {
+        webcam = new tmImage.Webcam(320, 240, true);
+        await webcam.setup();
+        await webcam.play();
+        document.getElementById("webcam").replaceWith(webcam.canvas);
+        predictLoop();
+      });
+    }
+
+    async function predictLoop() {
+      while (true) {
+        webcam.update();
+        const predictions = await model.predict(webcam.canvas);
+        labelContainer.innerHTML = predictions.map(p => `${p.className}: ${ (p.probability*100).toFixed(1) }%`).join("<br>");
+        await new Promise(r => setTimeout(r, 200));
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
